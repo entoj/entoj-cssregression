@@ -1,0 +1,1 @@
+--recursive --timeout 30000 --full-trace --require test/configuration.js
