@@ -4,81 +4,140 @@
  * Requirements
  * @ignore
  */
-const Task = require('entoj-system').task.Task;
+const CssRegressionConfiguration = require('../configuration/CssRegressionConfiguration.js').CssRegressionConfiguration;
+const Screenshot = require('../utils/Screenshot.js').Screenshot;
+const EntitiesTask = require('entoj-system').task.EntitiesTask;
 const GlobalRepository = require('entoj-system').model.GlobalRepository;
 const PathesConfiguration = require('entoj-system').model.configuration.PathesConfiguration;
-const SitesRepository = require('entoj-system').model.site.SitesRepository;
 const CliLogger = require('entoj-system').cli.CliLogger;
-const Screenshot = require('../utils/Screenshot.js').Screenshot;
+const ErrorHandler = require('entoj-system').error.ErrorHandler;
 const assertParameter = require('entoj-system').utils.assert.assertParameter;
-const pathes = require('entoj-system').utils.pathes;
-const urls = require('entoj-system').utils.urls;
-const through2 = require('through2');
 const VinylFile = require('vinyl');
 const co = require('co');
-const templateString = require('es6-template-strings');
 const path = require('path');
 
 
 /**
  * @memberOf task
  */
-class ScreenshotTask extends Task
+class ScreenshotTask extends EntitiesTask
 {
     /**
-     *
+     * @param {cli.CliLogger} cliLogger
+     * @param {model.GlobalRepository} globalRepository
+     * @param {model.configuration.PathesConfiguration} pathesConfiguration
+     * @param {configuration.CssRegressionConfiguration} moduleConfiguration
      */
-    constructor(cliLogger, sitesRepository, globalRepository, pathesConfiguration)
+    constructor(cliLogger, globalRepository, pathesConfiguration, moduleConfiguration)
     {
-        super(cliLogger);
+        super(cliLogger, globalRepository);
 
         //Check params
-        assertParameter(this, 'sitesRepository', sitesRepository, true, SitesRepository);
-        assertParameter(this, 'globalRepository', globalRepository, true, GlobalRepository);
         assertParameter(this, 'pathesConfiguration', pathesConfiguration, true, PathesConfiguration);
+        assertParameter(this, 'moduleConfiguration', moduleConfiguration, true, CssRegressionConfiguration);
 
         // Assign options
-        this._sitesRepository = sitesRepository;
-        this._globalRepository = globalRepository;
         this._pathesConfiguration = pathesConfiguration;
+        this._moduleConfiguration = moduleConfiguration;
         this._screenshot = new Screenshot();
     }
 
 
     /**
-     * @inheritDocs
+     * @inheritDoc
      */
     static get injections()
     {
-        return { 'parameters': [CliLogger, SitesRepository, GlobalRepository, PathesConfiguration] };
+        return { 'parameters': [CliLogger, GlobalRepository, PathesConfiguration] };
     }
 
 
     /**
-     * @inheritDocs
+     * @inheritDoc
      */
     static get className()
     {
-        return 'cssregression/CreateReferencesTask';
+        return 'task/ScreenshotTask';
     }
 
 
     /**
-     * @protected
-     * @returns {Promise<Array>}
+     * @inheritDoc
+     */
+    get sectionName()
+    {
+        return 'Creating screenshots';
+    }
+
+
+    /**
+     * @type {utils.Screenshot}
+     */
+    get screenshot()
+    {
+        return this._screenshot;
+    }
+
+
+    /**
+     * @type {model.configuration.PathesConfiguration}
+     */
+    get pathesConfiguration()
+    {
+        return this._pathesConfiguration;
+    }
+
+
+    /**
+     * @type {configuration.CssRegressionConfiguration}
+     */
+    get moduleConfiguration()
+    {
+        return this._moduleConfiguration;
+    }
+
+
+    /**
+     * @inheritDoc
      */
     prepareParameters(buildConfiguration, parameters)
     {
-        const result = super.prepareParameters(buildConfiguration, parameters);
-        result.query = result.query || '*';
-        result.filepathTemplate = result.filepathTemplate || '${site.name.urlify()}/${entityCategory.pluralName.urlify()}/${entity.idString}/tests/cssregression';
-        result.screenshotSuffix = result.screenshotSuffix || 'screenshot';
-        return result;
+        const parent = super.prepareParameters(buildConfiguration, parameters);
+        const scope = this;
+        const promise = co(function*()
+        {
+            const params = yield parent;
+            params.query = params.query || '*';
+            if (!params.screenshotFilenameTemplate)
+            {
+                params.screenshotFilenameTemplate = '${entityId.idString}-${name}@${width}.png';
+            }
+            if (!params.screenshotViewportWidths)
+            {
+                params.screenshotViewportWidths = scope.moduleConfiguration.viewportWidths;
+            }
+            if (!params.screenshotServerBaseUrl)
+            {
+                params.screenshotServerBaseUrl = 'http://localhost:3000';
+            }
+            return params;
+        }).catch(ErrorHandler.handler(scope));
+        return promise;
     }
 
 
     /**
-     * @returns {Promise<Array>}
+     * @inheritDoc
+     */
+    finalize(buildConfiguration, parameters)
+    {
+        this.screenshot.close();
+        return Promise.resolve([]);
+    }
+
+
+    /**
+     * @returns {Promise<VinylFile>}
      */
     renderEntity(entity, entitySettings, buildConfiguration, parameters)
     {
@@ -92,117 +151,93 @@ class ScreenshotTask extends Task
         const promise = co(function *()
         {
             // Prepare
+            const params = yield scope.prepareParameters(buildConfiguration, parameters);
             const files = [];
             const settings = entitySettings || {};
-            const widths = [320, 768, 1024, 1280];
-            const basepath = pathes.normalizePathSeparators(templateString(parameters.filepathTemplate,
-                {
-                    entity: entity,
-                    entityId: entity.id,
-                    site: entity.id.site,
-                    entityCategory: entity.id.category
-                }));
-            const testName = settings.name || urls.urlify(path.basename(settings.url, '.j2'));
-            const url = 'https://localhost:3000' + entity.pathString + '/' + settings.url + '?static';
+            settings.url = settings.url || 'examples/overview.j2';
+            settings.name = settings.name || path.basename(settings.url, '.j2');
+            settings.viewportWidths = settings.viewportWidths || params.screenshotViewportWidths;
 
-            // Render viewports
-            for (const width of widths)
+            // Export
+            const work = scope.cliLogger.work('Exporting <' + entity.pathString + '>');
+            for (const width of settings.viewportWidths)
             {
-                const filename = parameters.screenshotSuffix + '-' + testName + '@' + width + '.png'
-                const filepath = pathes.normalizePathSeparators(basepath + '/' + filename);
-                const work = scope._cliLogger.work('Rendering <' + entity.pathString + '/' + settings.url + '> for viewport <' + width + '> as <' + filename + '>');
-                const screenshot = yield scope._screenshot.create(url, width);
-                const file = new VinylFile(
+                const filename = yield scope.pathesConfiguration.resolve(params.screenshotFilenameTemplate,
                     {
-                        path: filepath,
-                        contents: screenshot
+                        site: entity.id.site,
+                        entityCategory: entity.id.category,
+                        entityId: entity.id,
+                        width: width,
+                        name: settings.name
                     });
-                files.push(file);
-                scope._cliLogger.end(work);
+                const url = params.screenshotServerBaseUrl + '/' + settings.url + '?static=true';
+                const work = scope.cliLogger.work('Rendering <' + entity.pathString + '/' + settings.url + '> for viewport <' + width + '> as <' + filename + '>');
+                let screenshot = false;
+                try
+                {
+                    screenshot = yield scope.screenshot.create(url, width);
+                }
+                catch (e)
+                {
+                    // Nop
+                }
+                if (screenshot)
+                {
+                    const file = new VinylFile(
+                        {
+                            path: filename,
+                            contents: screenshot
+                        });
+                    files.push(file);
+                    scope.cliLogger.end(work);
+                }
+                else
+                {
+                    scope.cliLogger.end(work, 'Could not take screenshot');
+                }
             }
+            scope.cliLogger.end(work);
 
             // Done
             return files;
-        })
-        .catch((e) =>
-        {
-            this.logger.error(e);
-        });
+        }).catch(ErrorHandler.handler(scope));
         return promise;
     }
 
 
     /**
-     * @inheritDocs
-     * @returns {Promise<Array>}
+     * @returns {Promise<Array<VinylFile>>}
      */
-    renderEntities(buildConfiguration, parameters)
+    processEntity(entity, buildConfiguration, parameters)
     {
+        /* istanbul ignore next */
+        if (!entity)
+        {
+            this.logger.warn(this.className + '::processEntity - No entity given');
+            return Promise.resolve(false);
+        }
+
         const scope = this;
         const promise = co(function *()
         {
-            // Prepare
-            const params = scope.prepareParameters(buildConfiguration, parameters);
-
-            // Compile each entity
+            // Render each configured screenshot
             const result = [];
-            const entities = yield scope._globalRepository.resolveEntities(params.query);
-            for (const entity of entities)
+            const settings = entity.properties.getByPath('test.cssregression', []);
+            for (const setting of settings)
             {
-                // Render each configured regression test
-                const settings = entity.properties.getByPath('testing.cssregression', []);
-                for (const setting of settings)
+                // Render screenshot
+                const files = yield scope.renderEntity(entity, setting, buildConfiguration, parameters);
+                if (files)
                 {
-                    // Render entity
-                    const files = yield scope.renderEntity(entity, setting, buildConfiguration, parameters);
-                    for (const file of files)
-                    {
-                        result.push(file);
-                    }
+                    const filesArray = Array.isArray(files)
+                        ? files
+                        : [files];
+                    result.push(...filesArray);
                 }
             }
-
-            // Done
             return result;
-        })
-        .catch((e) =>
-        {
-            this.logger.error(e);
-        });
+        }).catch(ErrorHandler.handler(scope));
         return promise;
-    }
-
-
-    /**
-     * @returns {Stream}
-     */
-    stream(stream, buildConfiguration, parameters)
-    {
-        let resultStream = stream;
-        if (!resultStream)
-        {
-            resultStream = through2(
-                {
-                    objectMode: true
-                });
-            const scope = this;
-            co(function *()
-            {
-                const work = scope._cliLogger.section('Rendering screenshots');
-                scope._cliLogger.options(scope.prepareParameters(buildConfiguration, parameters));
-                const files = yield scope.renderEntities(buildConfiguration, parameters);
-                for (const file of files)
-                {
-                    resultStream.write(file);
-                }
-                resultStream.end();
-                scope._cliLogger.end(work);
-            }).catch((e) =>
-            {
-                this.logger.error(e);
-            });
-        }
-        return resultStream;
     }
 }
 

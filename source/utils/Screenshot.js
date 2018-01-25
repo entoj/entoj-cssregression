@@ -38,7 +38,7 @@ class Screenshot extends Base
                 scope.browser = yield puppeteer.launch(
                     {
                         ignoreHTTPSErrors: true,
-                        headless: false
+                        headless: true
                     });
             }
 
@@ -46,7 +46,7 @@ class Screenshot extends Base
             const page = yield scope.browser.newPage();
             const waitForLoaded = page.waitForNavigation(
                 {
-                    timeout: 15000,
+                    timeout: 5000,
                     waitUntil: ['load', 'networkidle2']
                 });
             try

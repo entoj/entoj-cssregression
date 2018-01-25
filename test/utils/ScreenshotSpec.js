@@ -4,8 +4,8 @@
  * Requirements
  */
 const Screenshot = require(CSSREGRESSION_SOURCE + '/utils/Screenshot.js').Screenshot;
+const TestServer = require(CSSREGRESSION_TEST + '/TestServer.js').TestServer;
 const baseSpec = require('entoj-system/test').BaseShared;
-const http = require('http');
 const co = require('co');
 
 
@@ -41,15 +41,10 @@ describe(Screenshot.className, function()
         {
             const promise = co(function*()
             {
-                const server = http.createServer((req, res) =>
-                {
-                    res.write('This is sparta');
-                    res.end();
-                });
-                server.listen(8100);
+                const server = new TestServer().content('boojaahh').start(8100);
                 const testee = new Screenshot();
                 const buffer = yield testee.create('http://localhost:8100', 200);
-                server.close();
+                server.stop();
                 testee.close();
                 expect(buffer).instanceof(Buffer);
             });

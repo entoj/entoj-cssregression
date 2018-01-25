@@ -28,13 +28,17 @@ class CssRegressionConfiguration extends Base
         assertParameter(this, 'buildConfiguration', buildConfiguration, true, BuildConfiguration);
 
         // Create configuration
+        this._testDataTemplate = globalConfiguration.get('cssregression.testDataTemplate',
+            '${entityTemplate}/tests/cssregression.json');
         this._referenceShotTemplate = globalConfiguration.get('cssregression.referenceShotTemplate',
-            '${entityTemplate}/tests/cssregression/${name}-${breakpoint}-${suffix}.png');
+            '${entityTemplate}/tests/cssregression/${name}-${suffix}-@${width}.png');
+        this._viewportWidths = globalConfiguration.get('cssregression.viewportWidths', [320, 768, 1024, 1280]);
+        this._serverBaseUrl = false;
     }
 
 
     /**
-     * @inheritDocs
+     * @inheritDoc
      */
     static get injections()
     {
@@ -43,11 +47,22 @@ class CssRegressionConfiguration extends Base
 
 
     /**
-     * @inheritDocss
+     * @inheritDoc
      */
     static get className()
     {
         return 'configuration/CssRegressionConfiguration';
+    }
+
+
+    /**
+     * Template for entity specific test data
+     *
+     * @type {String}
+     */
+    get testDataTemplate()
+    {
+        return this._testDataTemplate;
     }
 
 
@@ -59,6 +74,17 @@ class CssRegressionConfiguration extends Base
     get referenceShotTemplate()
     {
         return this._referenceShotTemplate;
+    }
+
+
+    /**
+     * A list of viewport widths used for screenshots
+     *
+     * @type {Array}
+     */
+    get viewportWidths()
+    {
+        return this._viewportWidths;
     }
 }
 
