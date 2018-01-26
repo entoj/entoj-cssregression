@@ -89,12 +89,9 @@ class TestCommand extends Command
             const logger = scope.createLogger('command.cssregression.reference');
             const mapping = new Map();
             mapping.set(CliLogger, logger);
-            const pathesConfiguration = scope.context.di.create(PathesConfiguration);
-            const path = pathesConfiguration.sites;
             const options =
             {
-                writePath: path,
-                screenshotSuffix: 'reference'
+                screenshotSkipTest: true
             };
             const buildConfiguration = scope.context.di.create(BuildConfiguration);
             yield scope.context.di.create(ScreenshotTask, mapping)
@@ -146,11 +143,11 @@ class TestCommand extends Command
     {
         switch (action)
         {
-            case 'test':
-                return this.test();
+            case 'reference':
+                return this.reference();
 
             default:
-                return this.reference();
+                return this.test();
         }
     }
 }

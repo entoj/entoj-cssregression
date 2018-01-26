@@ -3,5 +3,5 @@
  */
 module.exports =
 {
-    JspmConfiguration: require('./JspmConfiguration.js').JspmConfiguration
+    CssRegressionConfiguration: require('./CssRegressionConfiguration.js').CssRegressionConfiguration
 };

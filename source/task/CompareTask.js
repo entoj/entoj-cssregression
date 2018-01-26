@@ -161,14 +161,14 @@ class CompareTask extends EntitiesTask
                                     width: referenceImage.width,
                                     height: referenceImage.height
                                 });
-                            const result = pixelmatch(referenceImage.data, testImage.data, differenceImage.data,
+                            const comparison = pixelmatch(referenceImage.data, testImage.data, differenceImage.data,
                                 referenceImage.width, referenceImage.height, { threshold: 0.1 });
                             const differenceFile = yield scope.writePng(testCase.differenceImagePath, differenceImage);
                             if (differenceFile)
                             {
                                 result.push(differenceFile);
                             }
-                            if (result > params.threshold)
+                            if (comparison > params.threshold)
                             {
                                 testCase.isValid = false;
                                 testSuite.failed++;

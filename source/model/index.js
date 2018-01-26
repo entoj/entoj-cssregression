@@ -1,0 +1,6 @@
+/**
+ * @namespace model
+ */
+module.exports =
+{
+};
