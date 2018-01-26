@@ -30,10 +30,15 @@ class CssRegressionConfiguration extends Base
         // Create configuration
         this._testDataTemplate = globalConfiguration.get('cssregression.testDataTemplate',
             '${entityTemplate}/tests/cssregression.json');
-        this._referenceShotTemplate = globalConfiguration.get('cssregression.referenceShotTemplate',
-            '${entityTemplate}/tests/cssregression/${name}-${suffix}-@${width}.png');
+        this._referenceImageTemplate = globalConfiguration.get('cssregression.referenceImageTemplate',
+            '${entityTemplate}/tests/cssregression/${name}-${os}-@${width}.png');
+        this._testImageTemplate = globalConfiguration.get('cssregression.estImageTemplate',
+            '${cache}/tests/cssregression/${site.name.urlify()}-${name}-${os}-@${width}.png');
+        this._differenceImageTemplate = globalConfiguration.get('cssregression.differenceImageTemplate',
+            '${cache}/tests/cssregression/${site.name.urlify()}-${name}-${os}-@${width}-difference.png');
         this._viewportWidths = globalConfiguration.get('cssregression.viewportWidths', [320, 768, 1024, 1280]);
-        this._serverBaseUrl = false;
+        this._serverBaseUrl = globalConfiguration.get('server.baseUrl', false);
+        this._differenceThreshold = globalConfiguration.get('cssregression.differenceThreshold', 100);
     }
 
 
@@ -67,13 +72,35 @@ class CssRegressionConfiguration extends Base
 
 
     /**
-     * Template for reference screenshot filenames
+     * Template for reference image filenames
      *
      * @type {String}
      */
-    get referenceShotTemplate()
+    get referenceImageTemplate()
     {
-        return this._referenceShotTemplate;
+        return this._referenceImageTemplate;
+    }
+
+
+    /**
+     * Template for test image filenames
+     *
+     * @type {String}
+     */
+    get testImageTemplate()
+    {
+        return this._testImageTemplate;
+    }
+
+
+    /**
+     * Template for difference image filenames
+     *
+     * @type {String}
+     */
+    get differenceImageTemplate()
+    {
+        return this._differenceImageTemplate;
     }
 
 
@@ -86,6 +113,18 @@ class CssRegressionConfiguration extends Base
     {
         return this._viewportWidths;
     }
+
+
+    /**
+     * Threshold of changed pixels to fail a test
+     *
+     * @type {Number}
+     */
+    get differenceThreshold()
+    {
+        return this._differenceThreshold;
+    }
+
 }
 
 

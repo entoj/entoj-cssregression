@@ -17,7 +17,9 @@
     "co-fs-extra": "^1.2.1",
     "entoj-system": "^0.2.3",
     "pixelmatch": "^4.0.2",
+    "pngjs": "^3.3.1",
     "puppeteer": "^1.0.0",
+    "stream-buffers": "^3.0.1",
     "vinyl": "^2.0.2"
   },
   "devDependencies": {

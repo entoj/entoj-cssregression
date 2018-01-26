@@ -4,7 +4,7 @@
  * Requirements
  * @ignore
  */
-const Test = require('entoj-system').model.test.Test;
+const TestSuite = require('entoj-system').model.test.TestSuite;
 
 
 /**
@@ -12,14 +12,14 @@ const Test = require('entoj-system').model.test.Test;
  *
  * @memberOf model.site
  */
-class CssRegressionTest extends Test
+class CssRegressionTestSuite extends TestSuite
 {
     /**
      * @inheritDocs
      */
     static get className()
     {
-        return 'model.test/CssRegressionTest';
+        return 'model.test/CssRegressionTestSuite';
     }
 }
 
@@ -28,4 +28,4 @@ class CssRegressionTest extends Test
  * Exports
  * @ignore
  */
-module.exports.CssRegressionTest = CssRegressionTest;
+module.exports.CssRegressionTestSuite = CssRegressionTestSuite;

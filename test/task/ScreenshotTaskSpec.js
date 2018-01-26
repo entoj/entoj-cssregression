@@ -5,11 +5,15 @@
  */
 const ScreenshotTask = require(CSSREGRESSION_SOURCE + '/task/ScreenshotTask.js').ScreenshotTask;
 const CssRegressionConfiguration = require(CSSREGRESSION_SOURCE + '/configuration/CssRegressionConfiguration.js').CssRegressionConfiguration;
+const CssRegressionTestSuite = require(CSSREGRESSION_SOURCE + '/model/test/CssRegressionTestSuite.js').CssRegressionTestSuite;
+const CssRegressionTestCase = require(CSSREGRESSION_SOURCE + '/model/test/CssRegressionTestCase.js').CssRegressionTestCase;
 const TestServer = require(CSSREGRESSION_TEST + '/TestServer.js').TestServer;
 const projectFixture = require('entoj-system/test').fixture.project;
 const entitiesTaskSpec = require('entoj-system/test').task.EntitiesTaskShared;
 const VinylFile = require('vinyl');
 const co = require('co');
+const path = require('path');
+const fs = require('co-fs-extra');
 
 
 /**
@@ -33,38 +37,63 @@ describe(ScreenshotTask.className, function()
      */
     beforeEach(function()
     {
-        global.fixtures = projectFixture.createDynamic();
+        const promise = co(function*()
+        {
+            yield fs.emptyDir(path.join(CSSREGRESSION_FIXTURES, 'temp'));
+        });
+        return promise;
     });
 
     // creates a initialized testee
-    const createTestee = function()
+    const createTestee = function(settings)
     {
-        const fixture = projectFixture.createStatic();
-        const moduleConfiguration = new CssRegressionConfiguration(fixture.globalConfiguration, fixture.buildConfiguration);
-        return new ScreenshotTask(global.fixtures.cliLogger, global.fixtures.globalRepository, fixture.pathesConfiguration, moduleConfiguration);
+        global.fixtures = projectFixture.createStatic({ settings: settings });
+        const moduleConfiguration = new CssRegressionConfiguration(global.fixtures.globalConfiguration, global.fixtures.buildConfiguration);
+        return new ScreenshotTask(global.fixtures.cliLogger, global.fixtures.globalRepository, global.fixtures.pathesConfiguration, moduleConfiguration);
     };
 
-    describe('#renderEntity()', function()
+    // creates a test suite
+    const createTestSuite = function(entity)
     {
-        it('should return a promise', function()
-        {
-            const testee = createTestee();
-            const promise = testee.renderEntity();
-            expect(promise).to.be.instanceof(Promise);
-            return promise;
-        });
+        const testSuite = new CssRegressionTestSuite(
+            {
+                name: 'cssregression',
+                site: entity.id.site
+            });
+        entity.testSuites.push(testSuite);
+        const testCase1 = new CssRegressionTestCase(
+            {
+                name: 'overview',
+                url: 'http://localhost:8100/overview',
+                viewportWidth: 100,
+                referenceImagePath: path.join(CSSREGRESSION_FIXTURES, 'temp/overview-reference.png'),
+                testImagePath: path.join(CSSREGRESSION_FIXTURES, 'temp/overview-test.png'),
+                differenceImagePath: path.join(CSSREGRESSION_FIXTURES, 'temp/overview-difference.png')
+            });
+        const testCase2 = new CssRegressionTestCase(
+            {
+                name: 'details',
+                url: 'http://localhost:8100/details',
+                viewportWidth: 100,
+                referenceImagePath: path.join(CSSREGRESSION_FIXTURES, 'temp/details-reference.png'),
+                testImagePath: path.join(CSSREGRESSION_FIXTURES, 'temp/details-test.png'),
+                differenceImagePath: path.join(CSSREGRESSION_FIXTURES, 'temp/details-difference.png')
+            });
+        testSuite.tests.push(testCase1);
+        testSuite.tests.push(testCase2);
+    };
 
-        it('should create a screenshot file for each viewport width', function()
+    describe('#processEntity()', function()
+    {
+        it('should create a screenshot for each test', function()
         {
             const promise = co(function*()
             {
-                const server = new TestServer().content('boojaahh').start(8100);
                 const testee = createTestee();
+                const server = new TestServer().content('boojaahh').start(8100);
                 const entity = yield global.fixtures.entitiesRepository.getById('m-teaser');
-                const result = yield testee.renderEntity(entity, {}, global.fixtures.buildConfiguration,
-                    {
-                        screenshotServerBaseUrl: 'http://localhost:8100',
-                    });
+                createTestSuite(entity);
+                const result = yield testee.processEntity(entity, global.fixtures.buildConfiguration);
                 yield testee.finalize(); // make sure we shut this down gracefully
                 server.stop();
                 expect(result).to.have.length(4);
@@ -76,182 +105,48 @@ describe(ScreenshotTask.className, function()
             return promise;
         });
 
-        it('should allow to customize the used viewport widths', function()
+        it('should only create reference screenshot when they dont exist', function()
         {
             const promise = co(function*()
             {
-                const server = new TestServer().content('boojaahh').start(8100);
                 const testee = createTestee();
+                const server = new TestServer().content('boojaahh').start(8100);
                 const entity = yield global.fixtures.entitiesRepository.getById('m-teaser');
-                const result = yield testee.renderEntity(entity, {}, global.fixtures.buildConfiguration,
-                    {
-                        screenshotServerBaseUrl: 'http://localhost:8100',
-                        screenshotViewportWidths: [300, 600]
-                    });
+                createTestSuite(entity);
+                yield fs.ensureFile(path.join(CSSREGRESSION_FIXTURES, 'temp/overview-reference.png'));
+                yield fs.ensureFile(path.join(CSSREGRESSION_FIXTURES, 'temp/details-reference.png'));
+                const result = yield testee.processEntity(entity, global.fixtures.buildConfiguration);
                 yield testee.finalize(); // make sure we shut this down gracefully
                 server.stop();
                 expect(result).to.have.length(2);
                 for (const screenshot of result)
                 {
-                    expect(screenshot.path).to.match(/@300|@600/);
+                    expect(screenshot.path).to.match(/-test/);
                 }
             });
             return promise;
         });
 
-        it('should generate a name form the given url', function()
+        it('should always create test screenshots', function()
         {
             const promise = co(function*()
             {
-                const server = new TestServer().content('boojaahh').start(8100);
                 const testee = createTestee();
+                const server = new TestServer().content('boojaahh').start(8100);
                 const entity = yield global.fixtures.entitiesRepository.getById('m-teaser');
-                const result = yield testee.renderEntity(entity,
-                    {
-                        url: 'wherver/whatever.j2'
-                    },
-                    global.fixtures.buildConfiguration,
-                    {
-                        screenshotServerBaseUrl: 'http://localhost:8100',
-                        screenshotViewportWidths: [300]
-                    });
+                createTestSuite(entity);
+                yield fs.ensureFile(path.join(CSSREGRESSION_FIXTURES, 'temp/overview-reference.png'));
+                yield fs.ensureFile(path.join(CSSREGRESSION_FIXTURES, 'temp/overview-test.png'));
+                yield fs.ensureFile(path.join(CSSREGRESSION_FIXTURES, 'temp/details-reference.png'));
+                yield fs.ensureFile(path.join(CSSREGRESSION_FIXTURES, 'temp/details-test.png'));
+                const result = yield testee.processEntity(entity, global.fixtures.buildConfiguration);
                 yield testee.finalize(); // make sure we shut this down gracefully
                 server.stop();
-                expect(result).to.have.length(1);
+                expect(result).to.have.length(2);
                 for (const screenshot of result)
                 {
-                    expect(screenshot.path).to.contain('-whatever');
+                    expect(screenshot.path).to.match(/-test/);
                 }
-            });
-            return promise;
-        });
-
-        it('should allow to specify a test name', function()
-        {
-            const promise = co(function*()
-            {
-                const server = new TestServer().content('boojaahh').start(8100);
-                const testee = createTestee();
-                const entity = yield global.fixtures.entitiesRepository.getById('m-teaser');
-                const result = yield testee.renderEntity(entity,
-                    {
-                        name: 'CATS'
-                    },
-                    global.fixtures.buildConfiguration,
-                    {
-                        screenshotServerBaseUrl: 'http://localhost:8100',
-                        screenshotViewportWidths: [300]
-                    });
-                yield testee.finalize(); // make sure we shut this down gracefully
-                server.stop();
-                expect(result).to.have.length(1);
-                for (const screenshot of result)
-                {
-                    expect(screenshot.path).to.contain('CATS');
-                }
-            });
-            return promise;
-        });
-
-        it('should allow to specify test viewport sizes', function()
-        {
-            const promise = co(function*()
-            {
-                const server = new TestServer().content('boojaahh').start(8100);
-                const testee = createTestee();
-                const entity = yield global.fixtures.entitiesRepository.getById('m-teaser');
-                const result = yield testee.renderEntity(entity,
-                    {
-                        viewportWidths: [300]
-                    },
-                    global.fixtures.buildConfiguration,
-                    {
-                        screenshotServerBaseUrl: 'http://localhost:8100',
-                        screenshotViewportWidths: [300]
-                    });
-                yield testee.finalize(); // make sure we shut this down gracefully
-                server.stop();
-                expect(result).to.have.length(1);
-                for (const screenshot of result)
-                {
-                    expect(screenshot.path).to.contain('@300');
-                }
-            });
-            return promise;
-        });
-
-        it('should allow to customize the generated filenames', function()
-        {
-            const promise = co(function*()
-            {
-                const server = new TestServer().content('boojaahh').start(8100);
-                const testee = createTestee();
-                const entity = yield global.fixtures.entitiesRepository.getById('m-teaser');
-                const result = yield testee.renderEntity(entity, {},
-                    global.fixtures.buildConfiguration,
-                    {
-                        screenshotServerBaseUrl: 'http://localhost:8100',
-                        screenshotFilenameTemplate: 'CHECK-${name}@${width}.png',
-                        screenshotViewportWidths: [300]
-                    });
-                yield testee.finalize(); // make sure we shut this down gracefully
-                server.stop();
-                expect(result).to.have.length(1);
-                for (const screenshot of result)
-                {
-                    expect(screenshot.path).to.contain('CHECK-');
-                }
-            });
-            return promise;
-        });
-
-        it('should add static=true to all urls', function()
-        {
-            const promise = co(function*()
-            {
-                const server = new TestServer().content('boojaahh').start(8100);
-                const testee = createTestee();
-                const entity = yield global.fixtures.entitiesRepository.getById('m-teaser');
-                yield testee.renderEntity(entity, {}, global.fixtures.buildConfiguration,
-                    {
-                        screenshotServerBaseUrl: 'http://localhost:8100',
-                        screenshotViewportWidths: [300]
-                    });
-                yield testee.finalize(); // make sure we shut this down gracefully
-                server.stop();
-                expect(server.requests).to.have.length(1);
-                for (const request of server.requests)
-                {
-                    expect(request).to.contain('static=true');
-                }
-            });
-            return promise;
-        });
-    });
-
-
-    describe('#processEntity()', function()
-    {
-        it('should create a screenshots for each configured test', function()
-        {
-            const promise = co(function*()
-            {
-                const server = new TestServer().content('boojaahh').start(8100);
-                const testee = createTestee();
-                const site = yield global.fixtures.sitesRepository.findBy({ '*' : 'Base' });
-                const entity = yield global.fixtures.entitiesRepository.getById('m-teaser', site);
-                const result = yield testee.processEntity(entity, global.fixtures.buildConfiguration,
-                    {
-                        screenshotServerBaseUrl: 'http://localhost:8100'
-                    });
-                yield testee.finalize(); // make sure we shut this down gracefully
-                server.stop();
-                expect(result).to.have.length(8);
-                for (const screenshot of result)
-                {
-                    expect(screenshot.path).to.match(/-overview|-other/);
-                }
-                expect(server.requests).to.have.length(8);
             });
             return promise;
         });

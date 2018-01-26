@@ -42,7 +42,7 @@ class TestCommand extends Command
 
 
     /**
-     * @inheritDocs
+     * @inheritDoc
      */
     static get className()
     {
@@ -51,7 +51,7 @@ class TestCommand extends Command
 
 
     /**
-     * @inheritDocs
+     * @inheritDoc
      */
     get help()
     {
@@ -78,7 +78,7 @@ class TestCommand extends Command
 
 
     /**
-     * @inheritDocs
+     * @inheritDoc
      * @returns {Promise<Server>}
      */
     reference(parameters)
@@ -106,7 +106,7 @@ class TestCommand extends Command
 
 
     /**
-     * @inheritDocs
+     * @inheritDoc
      * @returns {Promise<Server>}
      */
     test(parameters)
@@ -139,7 +139,7 @@ class TestCommand extends Command
 
 
     /**
-     * @inheritDocs
+     * @inheritDoc
      * @returns {Promise<Server>}
      */
     dispatch(action, parameters)

@@ -6,12 +6,14 @@
  */
 const LoaderPlugin = require('entoj-system').model.loader.LoaderPlugin;
 const PathesConfiguration = require('entoj-system').model.configuration.PathesConfiguration;
-const EntityAspect = require('entoj-system').model.entity.EntityAspect;
 const CssRegressionConfiguration = require('../../../configuration/CssRegressionConfiguration.js').CssRegressionConfiguration;
-const CssRegressionTest = require('../../test/CssRegressionTest.js').CssRegressionTest;
+const CssRegressionTestSuite = require('../../test/CssRegressionTestSuite.js').CssRegressionTestSuite;
+const CssRegressionTestCase = require('../../test/CssRegressionTestCase.js').CssRegressionTestCase;
 const assertParameter = require('entoj-system').utils.assert.assertParameter;
 const co = require('co');
-const fs = require('fs');
+const urls = require('entoj-system').utils.urls;
+const path = require('path');
+const os = require('os');
 
 
 /**
@@ -93,37 +95,50 @@ class CssRegressionTestsPlugin extends LoaderPlugin
             const settings = item.properties.getByPath(itemSite.name.urlify() + '.test.cssregression', []);
             if (settings.length)
             {
-                let test = item.tests.findBy(
+                // Get suite
+                let test = item.testSuites.findBy(
                     {
-                        'name': 'cssregression',
+                        name: 'cssregression',
                         site: itemSite
                     });
                 if (!test)
                 {
                     scope.logger.info('Creating new test for ' + item.pathString);
-                    test = new CssRegressionTest();
+                    test = new CssRegressionTestSuite();
                     test.name = 'cssregression';
                     test.site = itemSite;
-                    item.tests.push(test);
+                    item.testSuites.push(test);
                 }
                 else
                 {
                     scope.logger.info('Updating existing test for ' + item.pathString);
+                    test.clear();
                 }
-                const data =
+
+                for (const setting of settings)
                 {
-                    entityId: item.id,
-                    entityCategory: item.id.category,
-                    site: itemSite
-                };
-                const stateFile = yield scope.pathesConfiguration.resolve(scope.moduleConfiguration.testDataTemplate, data);
-                if (fs.existsSync(stateFile))
-                {
-                    const state = JSON.parse(fs.readFileSync(stateFile, { encoding: 'utf8' }));
-                    test.total = state.total || 0;
-                    test.ok = state.ok || 0;
-                    test.failed = state.failed || 0;
-                    test.tests = state.tests || [];
+                    const viewportWidths = setting.viewportWidths || scope.moduleConfiguration.viewportWidths;
+                    for (const viewportWidth of viewportWidths)
+                    {
+                        const testCase = new CssRegressionTestCase();
+                        const url = setting.url || 'examples/overview.j2';
+                        testCase.name = setting.name || path.basename(url, '.j2');
+                        testCase.url = urls.concat(scope.moduleConfiguration.serverBaseUrl, url + '?static=true');
+                        testCase.viewportWidth = viewportWidth;
+                        const data =
+                        {
+                            site: site || item.id.site,
+                            entityCategory: item.id.category,
+                            entityId: item.id,
+                            width: viewportWidth,
+                            name: testCase.name,
+                            os: os.type().toLowerCase()
+                        };
+                        testCase.referenceImagePath = yield scope.pathesConfiguration.resolve(scope.moduleConfiguration.referenceImageTemplate, data);
+                        testCase.testImagePath = yield scope.pathesConfiguration.resolve(scope.moduleConfiguration.testImageTemplate, data);
+                        testCase.differenceImagePath = yield scope.pathesConfiguration.resolve(scope.moduleConfiguration.differenceImageTemplate, data);
+                        test.tests.push(testCase);
+                    }
                 }
             }
 
