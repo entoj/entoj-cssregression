@@ -1,8 +1,8 @@
 /**
- * @namespace task
+ * @namespace model.test
  */
 module.exports =
 {
-    CompareTask: require('./CompareTask.js').CompareTask,
-    ScreenshotTask: require('./ScreenshotTask.js').ScreenshotTask
+    CssRegressionTestCase: require('./CssRegressionTestCase.js').CssRegressionTestCase,
+    CssRegressionTestSuite: require('./CssRegressionTestSuite.js').CssRegressionTestSuite
 };

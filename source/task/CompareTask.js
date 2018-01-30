@@ -133,6 +133,7 @@ class CompareTask extends EntitiesTask
                 testSuite.failed = 0;
                 for (const testCase of testSuite.tests)
                 {
+                    const work = scope.cliLogger.work('Comparing <' + entity.pathString + '>@<' + testCase.viewportWidth + '>');
                     const referenceExists = yield fs.exists(testCase.referenceImagePath);
                     const testExists = yield fs.exists(testCase.testImagePath);
                     if (!referenceExists || !testExists)
@@ -140,6 +141,7 @@ class CompareTask extends EntitiesTask
                         testCase.isValid = false;
                         testSuite.failed++;
                         testSuite.isValid = false;
+                        scope.cliLogger.end(work, 'Files not found');
                     }
                     else
                     {
@@ -153,6 +155,7 @@ class CompareTask extends EntitiesTask
                             testCase.isValid = false;
                             testSuite.failed++;
                             testSuite.isValid = false;
+                            scope.cliLogger.end(work, 'Images not found or wring size');
                         }
                         else
                         {
@@ -173,11 +176,13 @@ class CompareTask extends EntitiesTask
                                 testCase.isValid = false;
                                 testSuite.failed++;
                                 testSuite.isValid = false;
+                                scope.cliLogger.end(work, 'Images difference ' + comparison);
                             }
                             else
                             {
                                 testCase.isValid = true;
                                 testSuite.ok++;
+                                scope.cliLogger.end(work);
                             }
                         }
                     }

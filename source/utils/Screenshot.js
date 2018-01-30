@@ -27,18 +27,21 @@ class Screenshot extends Base
     /**
      * @returns {Promise<Buffer>}
      */
-    create(url, width)
+    create(url, width, options)
     {
         const scope = this;
         const promise = co(function *()
         {
+            // Prepare options
+            const opts = options || {};
+
             // Get browser
             if (!scope.browser)
             {
                 scope.browser = yield puppeteer.launch(
                     {
                         ignoreHTTPSErrors: true,
-                        headless: true
+                        headless: typeof opts.headless == 'undefined' ? true : opts.headless
                     });
             }
 
@@ -54,13 +57,16 @@ class Screenshot extends Base
                 yield page.setViewport(
                     {
                         width: width,
-                        height: 100
+                        height: 500
                     });
                 yield page.goto(url);
+                yield page.addScriptTag({ path: __dirname + '/scrollDown.js' });
                 yield waitForLoaded;
+                yield page.evaluate((scrollDelay) => scrollDown(scrollDelay), opts.scrollDelay || 150);
             }
             catch (e)
             {
+                scope.logger.error(e);
                 yield page.close();
                 return false;
             }

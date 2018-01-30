@@ -63,13 +63,31 @@ class TestCommand extends Command
             [
                 {
                     name: 'reference',
-                    options: [],
-                    description: 'Create the reference or baseline images used to detect changes'
+                    description: 'Create the reference or baseline images used to detect changes',
+                    options:
+                    [
+                        {
+                            name: 'query',
+                            type: 'inline',
+                            optional: true,
+                            defaultValue: '*',
+                            description: 'Query for sites to use e.g. /base'
+                        }
+                    ]
                 },
                 {
                     name: 'test',
-                    options: [],
-                    description: 'Create new images and compares them to the reference or baseline images to detect changes'
+                    description: 'Create new images and compares them to the reference or baseline images to detect changes',
+                    options:
+                    [
+                        {
+                            name: 'query',
+                            type: 'inline',
+                            optional: true,
+                            defaultValue: '*',
+                            description: 'Query for sites to use e.g. /base'
+                        }
+                    ]
                 }
             ]
         };
@@ -89,9 +107,12 @@ class TestCommand extends Command
             const logger = scope.createLogger('command.cssregression.reference');
             const mapping = new Map();
             mapping.set(CliLogger, logger);
+            const pathesConfiguration = scope.context.di.create(PathesConfiguration);
             const options =
             {
-                screenshotSkipTest: true
+                writePath: pathesConfiguration.root,
+                screenshotSkipTest: true,
+                screenshotForce: true
             };
             const buildConfiguration = scope.context.di.create(BuildConfiguration);
             yield scope.context.di.create(ScreenshotTask, mapping)
@@ -115,20 +136,16 @@ class TestCommand extends Command
             const mapping = new Map();
             mapping.set(CliLogger, logger);
             const pathesConfiguration = scope.context.di.create(PathesConfiguration);
-            const path = pathesConfiguration.sites;
             const options =
             {
-                writePath: path,
-                screenshotSuffix: 'test',
-                compareReferenceSuffix: 'reference',
-                compareTestSuffix: 'test',
-                compareDiffSuffix: 'diff'
+                writePath: pathesConfiguration.root
             };
             const buildConfiguration = scope.context.di.create(BuildConfiguration);
             yield scope.context.di.create(ScreenshotTask, mapping)
                 .pipe(scope.context.di.create(WriteFilesTask, mapping))
                 .run(buildConfiguration, options);
             yield scope.context.di.create(CompareTask, mapping)
+                .pipe(scope.context.di.create(WriteFilesTask, mapping))
                 .run(buildConfiguration, options);
         });
         return promise;

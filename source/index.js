@@ -6,6 +6,15 @@ function register(configuration, options)
 {
     // Commands
     configuration.commands.add(require('./command/index.js').TestCommand);
+
+    // Entities
+    configuration.mappings.add(require('entoj-system').model.entity.EntitiesLoader,
+        {
+            '!plugins':
+            [
+                require('./model/index.js').loader.documentation.CssRegressionTestsPlugin
+            ]
+        });
 }
 
 

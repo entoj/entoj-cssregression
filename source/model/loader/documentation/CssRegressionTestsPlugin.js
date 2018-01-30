@@ -88,7 +88,6 @@ class CssRegressionTestsPlugin extends LoaderPlugin
             {
                 return false;
             }
-
             const itemSite = site
                 ? site
                 : item.id.site;
@@ -123,7 +122,7 @@ class CssRegressionTestsPlugin extends LoaderPlugin
                         const testCase = new CssRegressionTestCase();
                         const url = setting.url || 'examples/overview.j2';
                         testCase.name = setting.name || path.basename(url, '.j2');
-                        testCase.url = urls.concat(scope.moduleConfiguration.serverBaseUrl, url + '?static=true');
+                        testCase.url = scope.moduleConfiguration.serverBaseUrl + '/' + url + '?static=true';
                         testCase.viewportWidth = viewportWidth;
                         const data =
                         {
@@ -140,6 +139,8 @@ class CssRegressionTestsPlugin extends LoaderPlugin
                         test.tests.push(testCase);
                     }
                 }
+
+                //console.log('Creating TestSuite ' + item.pathString, scope.moduleConfiguration, test);
             }
 
             return true;

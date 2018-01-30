@@ -125,6 +125,14 @@ class CssRegressionConfiguration extends Base
         return this._differenceThreshold;
     }
 
+
+    /**
+     * @type {String}
+     */
+    get serverBaseUrl()
+    {
+        return this._serverBaseUrl;
+    }
 }
 
 

@@ -79,6 +79,7 @@ class ScreenshotTask extends EntitiesTask
         {
             const params = yield parent;
             params.query = params.query || '*';
+            params.screenshotForce = params.screenshotForce || false;
             params.screenshotSkipTest = params.screenshotSkipTest || false;
             return params;
         }).catch(ErrorHandler.handler(scope));
@@ -104,7 +105,7 @@ class ScreenshotTask extends EntitiesTask
         const scope = this;
         const promise = co(function*()
         {
-            const work = scope.cliLogger.work('Rendering <' + entity.pathString + '/' + url + '> for viewport <' + width + '> as <' + filename + '>');
+            const work = scope.cliLogger.work('Rendering <' + entity.pathString + '>@<' + width + '>');
             let screenshot = false;
             try
             {
@@ -166,7 +167,7 @@ class ScreenshotTask extends EntitiesTask
                 for (const testCase of testSuite.tests)
                 {
                     // Reference
-                    if (fs.existsSync(testCase.referenceImagePath) == false)
+                    if (params.screenshotForce || fs.existsSync(testCase.referenceImagePath) == false)
                     {
                         const file = yield scope.createScreenshot(entity, testCase.viewportWidth, testCase.url, testCase.referenceImagePath);
                         if (file)
