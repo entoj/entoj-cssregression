@@ -42,9 +42,9 @@ npm run lint
 ### Licence
 [Apache License 2.0](LICENCE)
 
-[travis-image]: https://img.shields.io/travis/entoj/entoj-scaffold/master.svg?label=linux
-[travis-url]: https://travis-ci.org/entoj/entoj-scaffold
-[appveyor-image]: https://img.shields.io/appveyor/ci/ChristianAuth/entoj-scaffold/master.svg?label=windows
-[appveyor-url]: https://ci.appveyor.com/project/ChristianAuth/entoj-scaffold
-[coveralls-image]: https://img.shields.io/coveralls/entoj/entoj-scaffold/master.svg
-[coveralls-url]: https://coveralls.io/r/entoj/entoj-scaffold?branch=master
+[travis-image]: https://img.shields.io/travis/entoj/entoj-cssregression/master.svg?label=linux
+[travis-url]: https://travis-ci.org/entoj/entoj-cssregression
+[appveyor-image]: https://img.shields.io/appveyor/ci/ChristianAuth/entoj-cssregression/master.svg?label=windows
+[appveyor-url]: https://ci.appveyor.com/project/ChristianAuth/entoj-cssregression
+[coveralls-image]: https://img.shields.io/coveralls/entoj/entoj-cssregression/master.svg
+[coveralls-url]: https://coveralls.io/r/entoj/entoj-cssregression?branch=master
