@@ -41,7 +41,8 @@ class Screenshot extends Base
                 scope.browser = yield puppeteer.launch(
                     {
                         ignoreHTTPSErrors: true,
-                        headless: typeof opts.headless == 'undefined' ? true : opts.headless
+                        headless: typeof opts.headless == 'undefined' ? true : opts.headless,
+                        args: ['--no-sandbox', '--disable-setuid-sandbox']
                     });
             }
 
