@@ -122,7 +122,7 @@ class CssRegressionTestsPlugin extends LoaderPlugin
                         const testCase = new CssRegressionTestCase();
                         const url = setting.url || 'examples/overview.j2';
                         testCase.name = setting.name || path.basename(url, '.j2');
-                        testCase.url = scope.moduleConfiguration.serverBaseUrl + '/' + url + '?static=true';
+                        testCase.url = '/' + url + '?static=true';
                         testCase.viewportWidth = viewportWidth;
                         const data =
                         {

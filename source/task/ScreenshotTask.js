@@ -79,6 +79,7 @@ class ScreenshotTask extends EntitiesTask
         {
             const params = yield parent;
             params.query = params.query || '*';
+            params.screenshotServerUrl = params.screenshotServerUrl || 'http://localhost:3000';
             params.screenshotForce = params.screenshotForce || false;
             params.screenshotSkipTest = params.screenshotSkipTest || false;
             return params;
@@ -169,7 +170,8 @@ class ScreenshotTask extends EntitiesTask
                     // Reference
                     if (params.screenshotForce || fs.existsSync(testCase.referenceImagePath) == false)
                     {
-                        const file = yield scope.createScreenshot(entity, testCase.viewportWidth, testCase.url, testCase.referenceImagePath);
+                        const file = yield scope.createScreenshot(entity, testCase.viewportWidth,
+                            params.screenshotServerUrl + testCase.url, testCase.referenceImagePath);
                         if (file)
                         {
                             result.push(file);
@@ -178,7 +180,8 @@ class ScreenshotTask extends EntitiesTask
                     // Test
                     if (!params.screenshotSkipTest)
                     {
-                        const file = yield scope.createScreenshot(entity, testCase.viewportWidth, testCase.url, testCase.testImagePath);
+                        const file = yield scope.createScreenshot(entity, testCase.viewportWidth,
+                            params.screenshotServerUrl + testCase.url, testCase.testImagePath);
                         if (file)
                         {
                             result.push(file);

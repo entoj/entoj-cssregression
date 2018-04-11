@@ -64,7 +64,7 @@ describe(ScreenshotTask.className, function()
         const testCase1 = new CssRegressionTestCase(
             {
                 name: 'overview',
-                url: 'http://localhost:8100/overview',
+                url: '/overview',
                 viewportWidth: 100,
                 referenceImagePath: path.join(CSSREGRESSION_FIXTURES, 'temp/overview-reference.png'),
                 testImagePath: path.join(CSSREGRESSION_FIXTURES, 'temp/overview-test.png'),
@@ -73,7 +73,7 @@ describe(ScreenshotTask.className, function()
         const testCase2 = new CssRegressionTestCase(
             {
                 name: 'details',
-                url: 'http://localhost:8100/details',
+                url: '/details',
                 viewportWidth: 100,
                 referenceImagePath: path.join(CSSREGRESSION_FIXTURES, 'temp/details-reference.png'),
                 testImagePath: path.join(CSSREGRESSION_FIXTURES, 'temp/details-test.png'),
@@ -90,10 +90,11 @@ describe(ScreenshotTask.className, function()
             const promise = co(function*()
             {
                 const testee = createTestee();
+                const options = { screenshotServerUrl: 'http://localhost:8100' };
                 const server = new TestServer().content('boojaahh').start(8100);
                 const entity = yield global.fixtures.entitiesRepository.getById('m-teaser');
                 createTestSuite(entity);
-                const result = yield testee.processEntity(entity, global.fixtures.buildConfiguration);
+                const result = yield testee.processEntity(entity, global.fixtures.buildConfiguration, options);
                 yield testee.finalize(); // make sure we shut this down gracefully
                 server.stop();
                 expect(result).to.have.length(4);
@@ -110,12 +111,13 @@ describe(ScreenshotTask.className, function()
             const promise = co(function*()
             {
                 const testee = createTestee();
+                const options = { screenshotServerUrl: 'http://localhost:8100' };
                 const server = new TestServer().content('boojaahh').start(8100);
                 const entity = yield global.fixtures.entitiesRepository.getById('m-teaser');
                 createTestSuite(entity);
                 yield fs.ensureFile(path.join(CSSREGRESSION_FIXTURES, 'temp/overview-reference.png'));
                 yield fs.ensureFile(path.join(CSSREGRESSION_FIXTURES, 'temp/details-reference.png'));
-                const result = yield testee.processEntity(entity, global.fixtures.buildConfiguration);
+                const result = yield testee.processEntity(entity, global.fixtures.buildConfiguration, options);
                 yield testee.finalize(); // make sure we shut this down gracefully
                 server.stop();
                 expect(result).to.have.length(2);
@@ -132,6 +134,7 @@ describe(ScreenshotTask.className, function()
             const promise = co(function*()
             {
                 const testee = createTestee();
+                const options = { screenshotServerUrl: 'http://localhost:8100' };
                 const server = new TestServer().content('boojaahh').start(8100);
                 const entity = yield global.fixtures.entitiesRepository.getById('m-teaser');
                 createTestSuite(entity);
@@ -139,7 +142,7 @@ describe(ScreenshotTask.className, function()
                 yield fs.ensureFile(path.join(CSSREGRESSION_FIXTURES, 'temp/overview-test.png'));
                 yield fs.ensureFile(path.join(CSSREGRESSION_FIXTURES, 'temp/details-reference.png'));
                 yield fs.ensureFile(path.join(CSSREGRESSION_FIXTURES, 'temp/details-test.png'));
-                const result = yield testee.processEntity(entity, global.fixtures.buildConfiguration);
+                const result = yield testee.processEntity(entity, global.fixtures.buildConfiguration, options);
                 yield testee.finalize(); // make sure we shut this down gracefully
                 server.stop();
                 expect(result).to.have.length(2);
