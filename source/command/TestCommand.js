@@ -8,6 +8,7 @@ const Command = require('entoj-system').command.Command;
 const CliLogger = require('entoj-system').cli.CliLogger;
 const Context = require('entoj-system').application.Context;
 const PathesConfiguration = require('entoj-system').model.configuration.PathesConfiguration;
+const Communication = require('entoj-system').application.Communication;
 const ScreenshotTask = require('../task/ScreenshotTask.js').ScreenshotTask;
 const CompareTask = require('../task/CompareTask.js').CompareTask;
 const BuildConfiguration = require('entoj-system').model.configuration.BuildConfiguration;
@@ -99,6 +100,32 @@ class TestCommand extends Command
      * @inheritDoc
      * @returns {Promise<Server>}
      */
+    findServer(logger)
+    {
+        const scope = this;
+        const promise = co(function *()
+        {
+            logger.info('Connecting to IPC server');
+            const com = scope.context.di.create(Communication);
+            yield com.send('find-server');
+            const serverUrl = yield com.waitFor('found-server');
+            com.disconnect();
+            if (!serverUrl)
+            {
+                logger.error('Server is not running on this machine.\nPlease start the entoj server.');
+                process.exit(1);
+            }
+            logger.info('Found Server <' + serverUrl + '>');
+            return serverUrl;
+        });
+        return promise;
+    }
+
+
+    /**
+     * @inheritDoc
+     * @returns {Promise<Server>}
+     */
     reference(parameters)
     {
         const scope = this;
@@ -111,6 +138,7 @@ class TestCommand extends Command
             const options =
             {
                 writePath: pathesConfiguration.root,
+                screenshotServerUrl: yield scope.findServer(logger),
                 screenshotSkipTest: true,
                 screenshotForce: true
             };
@@ -138,7 +166,8 @@ class TestCommand extends Command
             const pathesConfiguration = scope.context.di.create(PathesConfiguration);
             const options =
             {
-                writePath: pathesConfiguration.root
+                writePath: pathesConfiguration.root,
+                screenshotServerUrl: yield scope.findServer(logger)
             };
             const buildConfiguration = scope.context.di.create(BuildConfiguration);
             yield scope.context.di.create(ScreenshotTask, mapping)
