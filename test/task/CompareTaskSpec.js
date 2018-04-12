@@ -4,6 +4,7 @@
  * Requirements
  */
 const CompareTask = require(CSSREGRESSION_SOURCE + '/task/CompareTask.js').CompareTask;
+const CssRegressionConfiguration = require(CSSREGRESSION_SOURCE + '/configuration/CssRegressionConfiguration.js').CssRegressionConfiguration;
 const CssRegressionTestSuite = require(CSSREGRESSION_SOURCE + '/model/test/CssRegressionTestSuite.js').CssRegressionTestSuite;
 const CssRegressionTestCase = require(CSSREGRESSION_SOURCE + '/model/test/CssRegressionTestCase.js').CssRegressionTestCase;
 const VinylFile = require('vinyl');
@@ -25,7 +26,8 @@ describe(CompareTask.className, function()
     entitiesTaskSpec(CompareTask, 'task/CompareTask', function()
     {
         const fixture = projectFixture.createStatic();
-        return [fixture.cliLogger, fixture.globalRepository];
+        const moduleConfiguration = new CssRegressionConfiguration(fixture.globalConfiguration, fixture.buildConfiguration);
+        return [fixture.cliLogger, fixture.globalRepository, moduleConfiguration];
     });
 
 
@@ -45,7 +47,8 @@ describe(CompareTask.className, function()
     const createTestee = function(settings)
     {
         global.fixtures = projectFixture.createStatic({ settings: settings });
-        return new CompareTask(global.fixtures.cliLogger, global.fixtures.globalRepository);
+        const moduleConfiguration = new CssRegressionConfiguration(global.fixtures.globalConfiguration, global.fixtures.buildConfiguration);
+        return new CompareTask(global.fixtures.cliLogger, global.fixtures.globalRepository, moduleConfiguration);
     };
 
     // creates a test suite

@@ -8,6 +8,7 @@ const EntitiesTask = require('entoj-system').task.EntitiesTask;
 const GlobalRepository = require('entoj-system').model.GlobalRepository;
 const CliLogger = require('entoj-system').cli.CliLogger;
 const ErrorHandler = require('entoj-system').error.ErrorHandler;
+const assertParameter = require('entoj-system').utils.assert.assertParameter;
 const CssRegressionConfiguration = require('../configuration/CssRegressionConfiguration.js').CssRegressionConfiguration;
 const VinylFile = require('vinyl');
 const streamBuffers = require('stream-buffers');
@@ -25,10 +26,14 @@ class CompareTask extends EntitiesTask
     /**
      * @param {cli.CliLogger} cliLogger
      * @param {model.GlobalRepository} globalRepository
+     * @param {configuration.CssRegressionConfiguration}
      */
     constructor(cliLogger, globalRepository, moduleConfiguration)
     {
         super(cliLogger, globalRepository);
+
+        // Check params
+        assertParameter(this, 'moduleConfiguration', moduleConfiguration, true, CssRegressionConfiguration);
 
         // Assign options
         this._moduleConfiguration = moduleConfiguration;
