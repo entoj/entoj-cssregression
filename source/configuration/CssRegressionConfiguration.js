@@ -37,8 +37,7 @@ class CssRegressionConfiguration extends Base
         this._differenceImageTemplate = globalConfiguration.get('cssregression.differenceImageTemplate',
             '${cache}/tests/cssregression/${site.name.urlify()}-${name}-${os}-@${width}-difference.png');
         this._viewportWidths = globalConfiguration.get('cssregression.viewportWidths', [320, 768, 1024, 1280]);
-        this._serverBaseUrl = globalConfiguration.get('server.baseUrl', false);
-        this._differenceThreshold = globalConfiguration.get('cssregression.differenceThreshold', 100);
+        this._differenceThreshold = globalConfiguration.get('cssregression.differenceThreshold', 0.1);
     }
 
 
@@ -123,15 +122,6 @@ class CssRegressionConfiguration extends Base
     get differenceThreshold()
     {
         return this._differenceThreshold;
-    }
-
-
-    /**
-     * @type {String}
-     */
-    get serverBaseUrl()
-    {
-        return this._serverBaseUrl;
     }
 }
 

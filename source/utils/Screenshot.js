@@ -63,11 +63,11 @@ class Screenshot extends Base
                 yield page.goto(url);
                 yield page.addScriptTag({ path: __dirname + '/scrollDown.js' });
                 yield waitForLoaded;
-                const scrollDown = new Function('scrollDelay', 'return scrollDown(scrollDelay);');
-                yield page.evaluate(scrollDown, opts.scrollDelay || 150);
+                yield page.evaluate((scrollDelay) => scrollDown(scrollDelay), opts.scrollDelay || 150);
             }
             catch (e)
             {
+                scope.logger.error('Error while rendering <' + url + '>');
                 scope.logger.error(e);
                 yield page.close();
                 return false;

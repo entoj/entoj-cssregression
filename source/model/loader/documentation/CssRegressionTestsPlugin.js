@@ -11,7 +11,6 @@ const CssRegressionTestSuite = require('../../test/CssRegressionTestSuite.js').C
 const CssRegressionTestCase = require('../../test/CssRegressionTestCase.js').CssRegressionTestCase;
 const assertParameter = require('entoj-system').utils.assert.assertParameter;
 const co = require('co');
-const urls = require('entoj-system').utils.urls;
 const path = require('path');
 const os = require('os');
 

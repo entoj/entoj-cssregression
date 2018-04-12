@@ -8,6 +8,7 @@ const EntitiesTask = require('entoj-system').task.EntitiesTask;
 const GlobalRepository = require('entoj-system').model.GlobalRepository;
 const CliLogger = require('entoj-system').cli.CliLogger;
 const ErrorHandler = require('entoj-system').error.ErrorHandler;
+const CssRegressionConfiguration = require('../configuration/CssRegressionConfiguration.js').CssRegressionConfiguration;
 const VinylFile = require('vinyl');
 const streamBuffers = require('stream-buffers');
 const co = require('co');
@@ -22,11 +23,24 @@ const pixelmatch = require('pixelmatch');
 class CompareTask extends EntitiesTask
 {
     /**
+     * @param {cli.CliLogger} cliLogger
+     * @param {model.GlobalRepository} globalRepository
+     */
+    constructor(cliLogger, globalRepository, moduleConfiguration)
+    {
+        super(cliLogger, globalRepository);
+
+        // Assign options
+        this._moduleConfiguration = moduleConfiguration;
+    }
+
+
+    /**
      * @inheritDoc
      */
     static get injections()
     {
-        return { 'parameters': [CliLogger, GlobalRepository] };
+        return { 'parameters': [CliLogger, GlobalRepository, CssRegressionConfiguration] };
     }
 
 
@@ -36,6 +50,15 @@ class CompareTask extends EntitiesTask
     static get className()
     {
         return 'task/CompareTask';
+    }
+
+
+    /**
+     * @type {configuration.CssRegressionConfiguration}
+     */
+    get moduleConfiguration()
+    {
+        return this._moduleConfiguration;
     }
 
 
@@ -155,7 +178,7 @@ class CompareTask extends EntitiesTask
                             testCase.isValid = false;
                             testSuite.failed++;
                             testSuite.isValid = false;
-                            scope.cliLogger.end(work, 'Images not found or wring size');
+                            scope.cliLogger.end(work, 'Image not found or wrong size');
                         }
                         else
                         {
@@ -165,7 +188,7 @@ class CompareTask extends EntitiesTask
                                     height: referenceImage.height
                                 });
                             const comparison = pixelmatch(referenceImage.data, testImage.data, differenceImage.data,
-                                referenceImage.width, referenceImage.height, { threshold: 0.1 });
+                                referenceImage.width, referenceImage.height, { threshold: scope.moduleConfiguration.differenceThreshold });
                             const differenceFile = yield scope.writePng(testCase.differenceImagePath, differenceImage);
                             if (differenceFile)
                             {
