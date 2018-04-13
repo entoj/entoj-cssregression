@@ -65,7 +65,6 @@ class Screenshot extends Base
                 yield waitForLoaded;
                 const scrollDown = new Function('scrollDelay', 'return scrollDown(scrollDelay);');
                 yield page.evaluate(scrollDown, opts.scrollDelay || 150);
-                //yield page.evaluate((scrollDelay) => scrollDown(scrollDelay), opts.scrollDelay || 150);
             }
             catch (e)
             {
