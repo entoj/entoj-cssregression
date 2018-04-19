@@ -1,4 +1,4 @@
-function scrollDown(wait)
+function scrollDown(waitScroll, waitEnd)
 {
     var promise = new Promise((resolve) =>
     {
@@ -7,19 +7,18 @@ function scrollDown(wait)
         var page = 1;
         var scroller = () =>
         {
-            console.log('Scrolling to ', page * windowHeight);
             window.scrollTo(0, page * windowHeight);
             page++;
             if (page < pages)
             {
-                setTimeout(scroller, wait);
+                setTimeout(scroller, waitScroll);
             }
             else
             {
-                setTimeout(() => resolve(true), wait * 2);
+                setTimeout(() => resolve(true), waitEnd);
             }
         };
-        setTimeout(scroller, wait);
+        setTimeout(scroller, waitScroll);
     });
     return promise;
 }

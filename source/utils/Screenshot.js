@@ -64,7 +64,7 @@ class Screenshot extends Base
                 yield page.addScriptTag({ path: __dirname + '/scrollDown.js' });
                 yield waitForLoaded;
                 const scrollDown = new Function('scrollDelay', 'return scrollDown(scrollDelay);');
-                yield page.evaluate(scrollDown, opts.scrollDelay || 150);
+                yield page.evaluate(scrollDown, opts.pageDelay || 200, opts.endDelay || 400);
             }
             catch (e)
             {

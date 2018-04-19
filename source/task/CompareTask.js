@@ -120,7 +120,7 @@ class CompareTask extends EntitiesTask
         {
             const params = yield parent;
             params.query = params.query || '*';
-            params.threshold = params.threshold || 1;
+            params.threshold = params.threshold || scope.moduleConfiguration.differenceThreshold || 0.1;
             return params;
         }).catch(ErrorHandler.handler(scope));
         return promise;
@@ -177,13 +177,29 @@ class CompareTask extends EntitiesTask
                         const testImage = yield scope.readPng(testCase.testImagePath);
                         if (referenceImage.width == 0 ||
                             referenceImage.height == 0 ||
-                            referenceImage.width != testImage.width ||
+                            testImage.width == 0 ||
+                            testImage.height == 0)
+                        {
+                            testCase.isValid = false;
+                            testSuite.failed++;
+                            testSuite.isValid = false;
+                            if (referenceImage.width == 0 ||
+                                referenceImage.height == 0)
+                            {
+                                scope.cliLogger.end(work, 'Test image not found at <' + testCase.testImagePath + '>');
+                            }
+                            else
+                            {
+                                scope.cliLogger.end(work, 'Reference image not found at <' + testCase.referenceImagePath + '>');
+                            }
+                        }
+                        else if (referenceImage.width != testImage.width ||
                             referenceImage.height != testImage.height)
                         {
                             testCase.isValid = false;
                             testSuite.failed++;
                             testSuite.isValid = false;
-                            scope.cliLogger.end(work, 'Image not found or wrong size');
+                            scope.cliLogger.end(work, 'Image sizes do not match');
                         }
                         else
                         {
@@ -193,7 +209,7 @@ class CompareTask extends EntitiesTask
                                     height: referenceImage.height
                                 });
                             const comparison = pixelmatch(referenceImage.data, testImage.data, differenceImage.data,
-                                referenceImage.width, referenceImage.height, { threshold: scope.moduleConfiguration.differenceThreshold });
+                                referenceImage.width, referenceImage.height, { threshold: params.threshold });
                             const differenceFile = yield scope.writePng(testCase.differenceImagePath, differenceImage);
                             if (differenceFile)
                             {
