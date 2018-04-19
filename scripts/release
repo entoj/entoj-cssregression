@@ -10,9 +10,6 @@ LINT=$SELF/lint
 TEST=$SELF/test
 
 # Go
-echo "Running Linter"
-$LINT
-
 echo "Running Tests"
 $TEST
 
